@@ -32,7 +32,7 @@ This lets the project train a three-class classifier, but it also means evaluati
 
 ## Workflow and files
 
-Run notebooks from top to bottom, then run the scripts in dependency order. Filenames below match the intended project workflow; if your local files use different names, update the commands and paths accordingly.
+Run notebooks from top to bottom, then run the scripts in dependency order. 
 
 ### 1. `1.1_bal_data.ipynb` — balanced sampling
 
@@ -53,7 +53,7 @@ The actual sample can be smaller if the source has fewer eligible examples. Beca
 - Retains records with missing timestamps rather than using them in the 24-hour comparison.
 - Saves `reviews.csv` for modelling.
 
-Record the final row count from the latest notebook output. Do not assume the final count is the original 150,000 because filtering and deduplication may reduce it.
+For this particular dataset, the final review count became 147,640.
 
 ### 3. `2_toys_reviews_models.ipynb` — model comparison
 
@@ -69,13 +69,13 @@ The reported evaluation includes accuracy, macro F1, weighted F1, class-level me
 
 The current workflow described for this project selects TF-IDF + Logistic Regression by macro F1 and saves the classifier as `sentiment_model.joblib`. The notebook also generates `reviews_with_predictions.csv`, including predicted sentiment, prediction confidence, rating-derived sentiment, and a disagreement indicator. Confirm those filenames and the selected model against your final run before submission.
 
-### 4. `3_product_and_reviews.ipynb` — product metadata join
+### 4. `3_product_and_reviews.py` — product metadata join
 
-Joins review predictions to product metadata using `parent_asin`. The notebook checks for duplicate metadata IDs and uses a many-to-one merge validation so duplicate product metadata does not silently multiply review rows. The output is the product-linked review data used for product-level exploration. Confirm the exact output filename in the notebook's save statement.
+Joins review predictions to product metadata using `parent_asin`, the parent ID of the product. The notebook checks for duplicate metadata IDs and uses a many-to-one merge validation so duplicate product metadata does not silently multiply review rows. The output is the product-linked review data used for product-level exploration, saved in `reviews_with_products.csv`. 
 
-### 5. Aspect evidence generation — `review_aspects.csv`
+### 5. `4.1_aspect_insights.py` - aspect evidence generation 
 
-The aspect evidence file is an input to the preparation script below. It must contain these columns:
+The aspect evidence file ( `review_aspects.csv`) is an input to the preparation script below. It must contain these columns:
 
 - `review_row_id` (or a supported alternative ID column such as `review_id`, `reviewId`, or `id`)
 - `parent_asin`
@@ -97,7 +97,7 @@ Optional useful fields include `product_title`, `rating`, and `overall_predicted
 
 The aspect-generation stage may use keyword rules to identify evidence and sentiment classification to label evidence. Inspect the actual aspect-generation code to confirm the exact method. Keyword rules can miss implicit mentions and can misinterpret context, negation, or words with multiple meanings.
 
-### 6. `prepare_aspect_insights.py` — unique aspect counts
+### 6. `5.product_insights.py` — unique aspect counts
 
 This script reads `review_aspects.csv` and `reviews_with_predictions.csv`, then creates:
 
@@ -123,7 +123,7 @@ This answers: what percentage of all reviews for the product contain negative fe
 
 These percentages have different denominators and should not be used interchangeably. A review that does not mention an aspect is excluded from the first denominator but remains in the second. Always interpret a high percentage alongside its review count; a high rate based on very few reviews is uncertain.
 
-### 7. `app.py` — Streamlit dashboard
+### 7. `app3.py` — Streamlit dashboard
 
 The app loads `reviews_with_predictions.csv`, `sentiment_model.joblib`, and the three prepared aspect-summary CSVs. It provides the six capabilities listed above. It uses cached loading for data and the model, so filters do not need to rerun model training or aspect aggregation.
 
@@ -139,7 +139,7 @@ py -m pip install pandas scikit-learn joblib plotly streamlit
 
 Install any additional packages required by the notebooks (for example, the NLP, transformer, or sentence-transformer libraries used by your model experiments).
 
-Place the following files beside `prepare_aspect_insights.py` and `app.py`:
+Place the following files beside `prepare_aspect_insights.py` and `app3.py`:
 
 ```text
 reviews_with_predictions.csv
@@ -153,7 +153,7 @@ Then run the aspect-summary preparation and launch the dashboard:
 
 ```bash
 py prepare_aspect_insights.py
-py -m streamlit run app.py
+py -m streamlit run app3.py
 ```
 
 If the browser tab opens but the dashboard does not load, check the terminal for the first error message. Common causes include missing CSV/model files, running Streamlit from the wrong Python environment, missing packages, or column names that do not match the expected inputs. The app loads the full `reviews_with_predictions.csv` into memory, so very large CSVs may need more RAM; use precomputed summaries and consider a smaller demo CSV if startup is slow.
@@ -168,37 +168,3 @@ If the browser tab opens but the dashboard does not load, check the terminal for
 6. **Confidence:** a classifier's maximum class probability is not necessarily a calibrated probability of correctness.
 7. **Small denominators:** aspect rates based on few reviews can be unstable. Display counts and inspect the supporting sentences.
 8. **Association is not causation:** complaints about delivery or packaging do not necessarily mean the product itself is defective.
-
-## Results to complete before submission
-
-Fill these values from the **latest actual run**; do not invent or reuse old metrics if the data or code has changed.
-
-- Final modelling dataset size: **[fill from notebook]**
-- Class counts after preprocessing: **[fill from notebook]**
-- Selected model and selection metric: **[fill from latest comparison]**
-- Held-out test accuracy, macro F1, and weighted F1: **[fill from latest evaluation]**
-- Product metadata match rate: **[fill from merge checks]**
-- Number of reviews with aspect evidence: **[fill from generated CSV]**
-- Minimum-review thresholds used in the dashboard: **[confirm from app settings]**
-- Example product/aspect issue with review count and evidence sentence: **[fill from latest output]**
-
-## Suggested repository structure
-
-```text
-project/
-├── 1.1_bal_data.ipynb
-├── 1_data_preprocessing.ipynb
-├── 2_toys_reviews_models.ipynb
-├── 3_product_and_reviews.ipynb
-├── 5_product_insights.ipynb
-├── prepare_aspect_insights.py
-├── app.py
-├── reviews_with_predictions.csv       # generated; may be too large to commit
-├── sentiment_model.joblib            # generated model artifact
-├── review_aspects.csv                 # generated by aspect evidence stage
-├── review_aspects_unique.csv          # generated by preparation script
-├── product_aspect_summary.csv         # generated by preparation script
-└── aspect_summary.csv                 # generated by preparation script
-```
-
-Large raw datasets and generated CSVs do not necessarily need to be committed to version control. Document how to obtain or regenerate them, and ensure the filenames in this README match the final filenames used by your code.
