@@ -34,7 +34,7 @@ This lets the project train a three-class classifier, but it also means evaluati
 
 Run notebooks from top to bottom, then run the scripts in dependency order. 
 
-### 1. `1.1_bal_data.ipynb` — balanced sampling
+### 1. `0_bal_data.ipynb` — balanced sampling
 
 - Reads the source review data.
 - Maps ratings to negative, neutral, and positive proxy labels.
