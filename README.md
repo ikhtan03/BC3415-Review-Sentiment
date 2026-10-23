@@ -139,7 +139,7 @@ py -m pip install pandas scikit-learn joblib plotly streamlit
 
 Install any additional packages required by the notebooks (for example, the NLP, transformer, or sentence-transformer libraries used by your model experiments).
 
-Place the following files beside `prepare_aspect_insights.py` and `app3.py`:
+Place the following files beside `5_product_insights.py` and `app3.py`:
 
 ```text
 reviews_with_predictions.csv
@@ -152,7 +152,7 @@ app.py
 Then run the aspect-summary preparation and launch the dashboard:
 
 ```bash
-py prepare_aspect_insights.py
+py 5_product_insights.py
 py -m streamlit run app3.py
 ```
 
